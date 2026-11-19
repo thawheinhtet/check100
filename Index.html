@@ -1,0 +1,118 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pick Check 100 | Global DC</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f7f9;--tx:#0f172a;--mu:#64748b;--pn:#fff;--bd:#e2e8f0;--ac:#14b8a6;--ok:#10b981;--wa:#f59e0b;--cr:#f97316;--br:#e11d48;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0a0d12;--tx:#f1f5f9;--mu:#8891a0;--pn:#11151c;--bd:#1f2530}}
+:root[data-theme="dark"]{--bg:#0a0d12;--tx:#f1f5f9;--mu:#8891a0;--pn:#11151c;--bd:#1f2530}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums}
+h1,h2,h3,.big{font-family:'Space Grotesk',Inter,sans-serif}
+header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--pn);border-bottom:1px solid var(--bd);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+h1{font-size:17px;margin:0}h1 span{color:var(--ac)}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+button,select,input{font:inherit;color:var(--tx);background:var(--pn);border:1px solid var(--bd);border-radius:8px;padding:7px 12px}
+button{cursor:pointer;font-weight:600}button.on,button.pri{background:var(--ac);border-color:var(--ac);color:#04201c}
+main{padding:14px;max-width:1280px;margin:auto}.tab{display:none}.tab.on{display:block}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));margin-bottom:12px}
+.card,.panel{background:var(--pn);border:1px solid var(--bd);border-radius:12px;padding:12px 14px}
+.panel{margin-bottom:12px}.card small,.mu{color:var(--mu);font-size:12px}
+.big{font-size:28px;font-weight:700;margin:2px 0}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cols{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--bd);white-space:nowrap}th{color:var(--mu);font-size:11px;text-transform:uppercase}
+.wrap{overflow-x:auto}.bar{height:7px;background:var(--bd);border-radius:4px;overflow:hidden;min-width:70px}.bar i{display:block;height:100%;background:var(--ac)}
+.chart{display:flex;align-items:flex-end;gap:5px;height:150px;position:relative}.chart div{flex:1;text-align:center;font-size:10px;color:var(--mu);display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+.chart b{display:block;background:var(--ac);border-radius:4px 4px 0 0;min-height:1px}.chart .r{background:var(--br)}
+.tg{position:absolute;left:0;right:0;border-top:2px dashed var(--wa)}
+#scan{font:600 22px 'JetBrains Mono',monospace;width:100%;padding:14px;border:2px solid var(--ac)}
+.res{border-left:5px solid var(--ac)}.ok{color:var(--ok)}.bad{color:var(--br)}.wa{color:var(--wa)}
+.btnbig{padding:16px 22px;font-size:17px;flex:1}.green{background:var(--ok);border-color:var(--ok);color:#fff}.red{background:var(--br);border-color:var(--br);color:#fff}
+video{width:100%;max-height:240px;border-radius:10px;background:#000;display:none}
+.tag{padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;background:var(--bd)}
+</style></head><body>
+<header><h1>PICK CHECK <span>100</span> · Global DC</h1>
+<nav id="nav"></nav><div class="row"><span class="mu" id="clock"></span><button onclick="theme()">◐</button></div></header>
+<main>
+<section class="tab" id="t-dash"></section>
+<section class="tab" id="t-scan">
+ <div class="panel"><div class="row"><input id="emp" placeholder="Employee ID" style="width:140px">
+ <button onclick="cam()">📷 Camera</button><span class="mu">Handheld scanner works too: just scan, the cursor stays in the box.</span></div>
+ <video id="vid" playsinline muted></video></div>
+ <div class="panel"><input id="scan" placeholder="Scan OLPN / LPN number…" autocomplete="off" autofocus></div>
+ <div id="res"></div>
+</section>
+<section class="tab" id="t-up">
+ <div class="cols">
+ <div class="panel"><h3>1 · BOH file (total pending to pick)</h3><p class="mu">Manhattan WMOS export. Needs store, item, quantity (cs). Columns are auto-detected; fix them below if needed.</p>
+ <input type="file" accept=".xlsx,.xls,.csv" onchange="load('boh',this)"><div id="map-boh"></div><p id="st-boh" class="mu"></p></div>
+ <div class="panel"><h3>2 · OLPN pending file</h3><p class="mu">Same file as your OLPN Dashboard (LPN, store, order, status, qty, location…).</p>
+ <input type="file" accept=".xlsx,.xls,.csv" onchange="load('olpn',this)"><div id="map-olpn"></div><p id="st-olpn" class="mu"></p></div></div>
+ <div class="panel"><h3>Shift settings</h3><div class="row">
+ Target CS/hr <input id="c-t" type="number" style="width:90px" onchange="cfg()"> Headcount <input id="c-h" type="number" style="width:70px" onchange="cfg()">
+ Shift <select id="c-s" onchange="cfg()"><option value="day">Day 07–19</option><option value="night">Night 19–07</option></select>
+ <button onclick="clearChecks()">Clear all checks (admin)</button></div></div>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const S={boh:[],olpn:[],checks:[],cfg:{t:600,h:10,s:'day'},up:{}};
+const RAW={boh:{h:[],r:[]},olpn:{h:[],r:[]}},MAP={boh:{},olpn:{}};
+const F={boh:{store:['storeno','store','customer'],item:['item','sku','product','itemcode'],desc:['description','desc','itemdesc'],qty:['bohqty','boh','pendingqty','qty','cases','cs','onhand'],loc:['location','loc','zone']},
+olpn:{lpn:['olpn','lpn','containerno','container'],store:['storeno','store'],order:['orderno','tcorderid','orderid','order'],item:['item','sku'],qty:['orderqty','qty','cases','cs'],status:['status','lpnstatus'],loc:['currentlocation','location','loc'],pallet:['palletid','pallet','parentlpn']}};
+const norm=s=>String(s).toLowerCase().replace(/[^a-z0-9]/g,'');
+const lt=(l,p)=>{l=String(l||'').toUpperCase();p=String(p||'').toUpperCase();return p.startsWith('S')||l.startsWith('S')?'Put To Light Pallet':l.startsWith('D890')?'XD Full Pallet':l.startsWith('DPL0')?'NM Full Pallet':l.startsWith('L890')?'XD Manual Pick':l.startsWith('OFS')?'NM Manual Pick':l.startsWith('DFS')?'NM Selective Pick':l.startsWith('CD')?'Boom Conveyor':l.startsWith('00000')?'Auto Pack':/^[0-9]/.test(l)?'Infeed':'Other'};
+function save(){try{const q=indexedDB.open('pc100',1);q.onupgradeneeded=()=>q.result.createObjectStore('kv');q.onsuccess=()=>{try{q.result.transaction('kv','readwrite').objectStore('kv').put(S,'S')}catch(e){}}}catch(e){}}
+function restore(cb){try{const q=indexedDB.open('pc100',1);q.onupgradeneeded=()=>q.result.createObjectStore('kv');q.onsuccess=()=>{try{const g=q.result.transaction('kv').objectStore('kv').get('S');g.onsuccess=()=>{if(g.result)Object.assign(S,g.result);cb()};g.onerror=cb}catch(e){cb()}};q.onerror=cb}catch(e){cb()}}
+function theme(){const d=document.documentElement,c=d.dataset.theme||(matchMedia('(prefers-color-scheme:light)').matches?'light':'dark');d.dataset.theme=c==='dark'?'light':'dark'}
+function tab(t){document.querySelectorAll('.tab').forEach(e=>e.classList.toggle('on',e.id==='t-'+t));document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));if(t==='dash')dash();if(t==='scan')$('scan').focus()}
+$('nav').innerHTML=[['dash','Dashboard'],['scan','Scan Check'],['up','Upload']].map(a=>`<button data-t="${a[0]}" onclick="tab('${a[0]}')">${a[1]}</button>`).join('');
+setInterval(()=>$('clock').textContent=new Date().toLocaleTimeString('en-GB'),1000);
+function load(k,el){const f=el.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const wb=XLSX.read(e.target.result,{type:'array'});const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});RAW[k]={h:Object.keys(rows[0]||{}),r:rows};MAP[k]={};for(const[fd,al]of Object.entries(F[k])){const hs=RAW[k].h;MAP[k][fd]=hs.find(h=>al.includes(norm(h)))||hs.find(h=>al.some(a=>norm(h).includes(a)))||''}S.up[k]=f.name+' · '+new Date().toLocaleString('en-GB');build(k)};r.readAsArrayBuffer(f);el.value=''}
+function build(k){const m=MAP[k],g=(r,f)=>m[f]?r[m[f]]:'';
+$('map-'+k).innerHTML='<div class="row" style="margin-top:8px">'+Object.keys(F[k]).map(f=>`<label class="mu">${f}<br><select onchange="MAP.${k}.${f}=this.value;build('${k}')"><option value="">—</option>${RAW[k].h.map(h=>`<option ${h===m[f]?'selected':''}>${h}</option>`).join('')}</select></label>`).join('')+'</div>';
+if(k==='boh')S.boh=RAW.boh.r.map(r=>({store:String(g(r,'store')).trim(),item:String(g(r,'item')).trim(),desc:g(r,'desc'),qty:+g(r,'qty')||0,loc:g(r,'loc')}));
+else{const mp={};RAW.olpn.r.forEach(r=>{const l=String(g(r,'lpn')).trim().toUpperCase();if(!l)return;const o=mp[l]||(mp[l]={lpn:l,store:String(g(r,'store')).trim(),order:g(r,'order'),status:String(g(r,'status')).toUpperCase().trim(),loc:g(r,'loc'),type:lt(l,g(r,'pallet')),qty:0,items:[]});o.qty+=+g(r,'qty')||0;o.items.push({item:g(r,'item'),qty:+g(r,'qty')||0})});S.olpn=Object.values(mp)}
+$('st-'+k).textContent=(S[k].length)+' '+(k==='boh'?'lines':'LPNs')+' loaded · '+S.up[k];save()}
+function cfg(){S.cfg={t:+$('c-t').value||0,h:+$('c-h').value||1,s:$('c-s').value};save()}
+function clearChecks(){if(confirm('Delete ALL check records?')){S.checks=[];save();dash()}}
+const done=()=>new Set(S.checks.map(c=>c.lpn));
+const isPend=o=>!/^(LT|LOAD)/.test(o.status);
+function shiftRange(){const n=new Date(),h=n.getHours(),d=new Date(n);d.setHours(0,0,0,0);let a;if(S.cfg.s==='day'){a=d.getTime()+7*36e5}else{a=d.getTime()+19*36e5;if(h<7)a-=864e5}return[a,a+12*36e5]}
+function mpStore(){const lp=latest();return lp}
+function latest(){const m={};S.checks.forEach(c=>m[c.lpn]=c);return m}
+function scanLpn(code){const o=S.olpn.find(x=>x.lpn===code),el=$('res'),lp=latest()[code];
+if(!o){el.innerHTML=`<div class="panel res" style="border-color:var(--br)"><h3 class="bad">Not found in OLPN pending file</h3><p>${code}</p></div>`;return}
+el.innerHTML=`<div class="panel res"><div class="row"><h3 style="margin:0">${o.lpn}</h3><span class="tag">${o.type}</span><span class="tag">${o.status||'—'}</span></div>
+<p>Store <b>${o.store}</b> · Loc ${o.loc||'—'} · <b>${o.qty}</b> cs · ${o.items.length} line(s)</p>${lp?`<p class="wa">⚠ Already checked ${new Date(lp.ts).toLocaleTimeString('en-GB')} (${lp.res==='OK'?'OK':'Returned'})</p>`:''}
+<div class="wrap"><table><tr><th>Item</th><th>Qty</th></tr>${o.items.slice(0,30).map(i=>`<tr><td>${i.item}</td><td>${i.qty}</td></tr>`).join('')}</table></div>
+<div class="row" style="margin-top:10px"><button class="btnbig green" onclick="rec('${code}','OK')">✔ 100% Complete</button>
+<select id="why" style="flex:1"><option>Short pick</option><option>Wrong item</option><option>Over pick</option><option>Damaged</option><option>Other</option></select>
+<button class="btnbig red" onclick="rec('${code}','RET')">↩ Return to Picking</button></div></div>`}
+function rec(l,res){const o=S.olpn.find(x=>x.lpn===l);S.checks.push({lpn:l,store:o.store,type:o.type,qty:o.qty,res,why:res==='RET'?$('why').value:'',emp:$('emp').value,ts:Date.now()});save();$('res').innerHTML=`<div class="panel res"><h3 class="${res==='OK'?'ok':'bad'}">${l} saved: ${res==='OK'?'Complete':'Returned to Picking'}</h3></div>`;$('scan').value='';$('scan').focus()}
+$('scan').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.value.trim())scanLpn(e.target.value.trim().toUpperCase())});
+let stream;async function cam(){const v=$('vid');if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;v.style.display='none';return}
+if(!('BarcodeDetector'in window))return alert('Camera scan needs Chrome on Android. Use a handheld scanner or type the number.');
+try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});v.srcObject=stream;v.style.display='block';await v.play();const d=new BarcodeDetector();const loop=async()=>{if(!stream)return;try{const b=await d.detect(v);if(b[0]){const c=b[0].rawValue.toUpperCase();$('scan').value=c;scanLpn(c);navigator.vibrate&&navigator.vibrate(80);await new Promise(r=>setTimeout(r,1500))}}catch(e){}requestAnimationFrame(loop)};loop()}catch(e){alert('Camera not available')}}
+function xl(){const lp=latest(),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(S.checks.map(c=>({...c,time:new Date(c.ts).toLocaleString('en-GB')}))),'Checks');
+XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(S.olpn.filter(o=>isPend(o)&&!lp[o.lpn]).map(o=>({lpn:o.lpn,store:o.store,type:o.type,status:o.status,loc:o.loc,qty:o.qty}))),'Not checked');XLSX.writeFile(wb,'PickCheck_'+new Date().toISOString().slice(0,10)+'.xlsx')}
+function dash(){const lp=latest(),[a,b]=shiftRange(),sc=S.checks.filter(c=>c.ts>=a&&c.ts<b),pend=S.olpn.filter(isPend),left=pend.filter(o=>!lp[o.lpn]);
+const sum=(x,f)=>x.reduce((s,v)=>s+f(v),0),bohCs=sum(S.boh,r=>r.qty),csC=sum(sc,c=>c.qty),ok=sc.filter(c=>c.res==='OK').length,ret=sc.length-ok;
+const el=Math.max(.25,Math.min(12,(Date.now()-a)/36e5)),rate=csC/el,pp=rate/(S.cfg.h||1),fc=Math.round(rate*12);
+const hrs=[...Array(12)].map((_,i)=>{const x=sc.filter(c=>c.ts>=a+i*36e5&&c.ts<a+(i+1)*36e5);return{h:new Date(a+i*36e5).getHours(),cs:sum(x,c=>c.qty),n:x.length,r:x.filter(c=>c.res!=='OK').length}});
+const mx=Math.max(S.cfg.t,...hrs.map(h=>h.cs),1);
+const types=[...new Set(S.olpn.map(o=>o.type))].map(t=>{const p=pend.filter(o=>o.type===t),c=p.filter(o=>lp[o.lpn]);return{t,p:p.length,c:c.length,r:c.filter(o=>lp[o.lpn].res!=='OK').length}}).filter(x=>x.p||x.c);
+const st={};left.forEach(o=>st[o.store]=(st[o.store]||0)+o.qty);const top=Object.entries(st).sort((x,y)=>y[1]-x[1]).slice(0,8);
+const why={};sc.filter(c=>c.res!=='OK').forEach(c=>why[c.why]=(why[c.why]||0)+1);
+const K=(l,v,s,c='')=>`<div class="card"><small>${l}</small><div class="big ${c}">${v}</div><small>${s}</small></div>`;
+$('t-dash').innerHTML=`<div class="row" style="margin-bottom:10px"><button class="pri" onclick="xl()">Export Excel</button><span class="mu">${S.up.boh?'BOH: '+S.up.boh:'BOH not uploaded'} · ${S.up.olpn?'OLPN: '+S.up.olpn:'OLPN not uploaded'}</span></div>
+<div class="grid">${K('BOH PENDING TO PICK',bohCs.toLocaleString()+' cs',S.boh.length+' lines · '+new Set(S.boh.map(r=>r.store)).size+' stores')}${K('OLPN PENDING',pend.length.toLocaleString(),sum(pend,o=>o.qty).toLocaleString()+' cs')}${K('LEFT TO CHECK',left.length.toLocaleString(),sum(left,o=>o.qty).toLocaleString()+' cs','wa')}${K('CHECKED THIS SHIFT',sc.length,csC.toLocaleString()+' cs')}</div>
+<div class="grid">${K('FIRST-PASS 100%',sc.length?Math.round(ok/sc.length*100)+'%':'–',ok+' complete','ok')}${K('RETURNED TO PICKING',ret,sc.length?Math.round(ret/sc.length*100)+'% of checked':'–',ret?'bad':'')}${K('CS / HOUR',Math.round(rate),'target '+S.cfg.t,rate>=S.cfg.t?'ok':'wa')}${K('CS / PERSON / HR',pp.toFixed(1),S.cfg.h+' people · forecast '+fc+' cs')}</div>
+<div class="panel"><h3>Hourly output · cs (red = returned labels)</h3><div class="chart">${hrs.map(h=>`<div><small>${h.cs||''}</small><b style="height:${h.cs/mx*115}px"></b>${h.r?`<b class="r" style="height:${Math.max(4,h.r/Math.max(h.n,1)*20)}px"></b>`:''}${String(h.h).padStart(2,'0')}</div>`).join('')}<span class="tg" style="bottom:${S.cfg.t/mx*115+17}px"></span></div></div>
+<div class="cols"><div class="panel wrap"><h3>Pending by LPN type</h3><table><tr><th>Type</th><th>Pending</th><th>Checked</th><th>Ret.</th><th></th></tr>${types.map(x=>`<tr><td>${x.t}</td><td>${x.p}</td><td>${x.c}</td><td class="${x.r?'bad':''}">${x.r}</td><td><div class="bar"><i style="width:${x.p?x.c/x.p*100:0}%"></i></div></td></tr>`).join('')||'<tr><td class="mu">Upload OLPN file</td></tr>'}</table></div>
+<div class="panel wrap"><h3>Top stores left to check (cs)</h3><table>${top.map(t=>`<tr><td>${t[0]}</td><td>${t[1]}</td></tr>`).join('')||'<tr><td class="mu">–</td></tr>'}</table><h3>Return reasons</h3>${Object.entries(why).map(w=>`<div class="row"><span class="tag">${w[1]}</span> ${w[0]}</div>`).join('')||'<span class="mu">None</span>'}</div>
+<div class="panel wrap"><h3>Latest checks</h3><table>${S.checks.slice(-10).reverse().map(c=>`<tr><td>${new Date(c.ts).toLocaleTimeString('en-GB')}</td><td>${c.lpn}</td><td>${c.store}</td><td class="${c.res==='OK'?'ok':'bad'}">${c.res==='OK'?'OK':'Return'}</td></tr>`).join('')||'<tr><td class="mu">No checks yet</td></tr>'}</table></div></div>`}
+restore(()=>{$('c-t').value=S.cfg.t;$('c-h').value=S.cfg.h;$('c-s').value=S.cfg.s;['boh','olpn'].forEach(k=>{if(S[k].length)$('st-'+k).textContent=S[k].length+' loaded · '+(S.up[k]||'')});tab('dash')});
+setInterval(()=>{if($('t-dash').classList.contains('on'))dash()},60000);
+</script></body></html>
